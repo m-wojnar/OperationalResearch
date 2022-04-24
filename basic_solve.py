@@ -9,13 +9,14 @@ def solve(filename: str) -> str:
     with open(filename, 'r') as file:
         data = json.load(file)
 
-    shops = [] + data['shops']
+    shops = {}
     products_list = set(data['list'])
     start = data['start']
     weights = data['weights']
 
-    for shop in shops:
+    for shop in data['shops']:
         shop['items'] = set(shop['items'])
+        shops[shop['id']] = shop
 
     shops_list = select_shops(products_list, shops)
     shops_list = order_shops(shops_list, shops, start)
@@ -27,13 +28,13 @@ def solve(filename: str) -> str:
     })
 
 
-def select_shops(products_list: set, shops: list[dict]) -> dict[int, set]:
+def select_shops(products_list: set, shops: dict[int, dict]) -> dict[int, set]:
     result = {}
 
     while len(products_list) > 0:
         max_size, max_i, max_set = -1, -1, set()
 
-        for shop in shops:
+        for shop in shops.values():
             intersection_len = len(shop['items'] & products_list)
 
             if intersection_len > max_size:
@@ -49,24 +50,17 @@ def select_shops(products_list: set, shops: list[dict]) -> dict[int, set]:
 
 def order_shops(
         shops_list: dict[int, set],
-        shops: list[dict],
+        shops: dict[int, dict],
         start: dict
 ) -> list[tuple[int, list]]:
     def det(a: dict, b: dict, c: dict) -> float:
         return a['x'] * b['y'] + a['y'] * c['x'] + b['x'] * c['y'] - c['x'] * b['y'] - c['y'] * a['x']
 
-    def det_start(shop_i: dict, shop_j: dict) -> float:
-        return det(start, shop_i, shop_j)
+    def det_start(shop_i: tuple[int, list], shop_j: tuple[int, list]) -> float:
+        return det(start, shops[shop_i[0]], shops[shop_j[0]])
 
-    def filter_shops(shops_list: dict[int, set], shops: list[dict], filter_func: Callable) -> list[dict]:
-        filtered = []
-
-        for shop_id in shops_list.keys():
-            shop = next(shop for shop in shops if shop['id'] == shop_id)
-            if filter_func(shop):
-                filtered.append(shop)
-
-        return filtered
+    def filter_shops(shops_list: dict[int, set], shops: dict[int, dict], filter_func: Callable) -> list[tuple[int, list]]:
+        return [(shop[0], list(shop[1])) for shop in shops_list.items() if filter_func(shops[shop[0]])]
 
     upper_shops = filter_shops(shops_list, shops, lambda shop: shop['y'] >= start['y'])
     lower_shops = filter_shops(shops_list, shops, lambda shop: shop['y'] < start['y'])
@@ -74,15 +68,12 @@ def order_shops(
     upper_shops = sorted(upper_shops, key=cmp_to_key(det_start), reverse=True)
     lower_shops = sorted(lower_shops, key=cmp_to_key(det_start), reverse=False)
 
-    result = [(shop['id'], list(shops_list[shop['id']])) for shop in upper_shops]
-    result += [(shop['id'], list(shops_list[shop['id']])) for shop in lower_shops]
-
-    return result
+    return upper_shops + lower_shops
 
 
 def calculate_cost(
         shops_list: list[tuple[int, list]],
-        shops: list[dict],
+        shops: dict[int, dict],
         start: dict,
         weights: dict[str, dict]
 ) -> float:
@@ -92,23 +83,14 @@ def calculate_cost(
     cost = 0
 
     for (shop_i, _), (shop_j, _) in zip(shops_list, shops_list[1:]):
-        w = weights[str(shop_i)][str(shop_j)]
-        shop_i = next(shop for shop in shops if shop['id'] == shop_i)
-        shop_j = next(shop for shop in shops if shop['id'] == shop_j)
-        cost += w * dist(shop_i, shop_j)
+        cost += weights[str(shop_i)][str(shop_j)] * dist(shops[shop_i], shops[shop_j])
 
-    first_shop, _ = shops_list[0]
-    w = weights['0'][str(first_shop)]
-    first_shop = next(shop for shop in shops if shop['id'] == first_shop)
-    cost += w * dist(start, first_shop)
-
-    last_shop, _ = shops_list[-1]
-    w = weights['0'][str(last_shop)]
-    last_shop = next(shop for shop in shops if shop['id'] == last_shop)
-    cost += w * dist(start, last_shop)
+    (first_shop, _), (last_shop, _) = shops_list[0], shops_list[-1]
+    cost += weights['0'][str(first_shop)] * dist(start, shops[first_shop])
+    cost += weights[str(last_shop)]['0'] * dist(shops[last_shop], start)
 
     for shop_id, _ in shops_list:
-        cost += next(shop for shop in shops if shop['id'] == shop_id)['q']
+        cost += shops[shop_id]['q']
 
     return cost
 
