@@ -6,6 +6,13 @@ from typing import Callable
 
 
 def solve(filename: str) -> str:
+    """
+    Read JSON data from file and return simple solution that satisfies problem constraints in JSON string.
+
+    :param filename: name of the file to read JSON from
+    :return: JSON string with solution and cost
+    """
+
     with open(filename, 'r') as file:
         data = json.load(file)
 
@@ -29,6 +36,14 @@ def solve(filename: str) -> str:
 
 
 def select_shops(products_list: set, shops: dict[int, dict]) -> dict[int, set]:
+    """
+    From the list of all shops, select the shops that have in stock products from the list of products to buy.
+
+    :param products_list: list of products to buy
+    :param shops: dictionary with all available shops
+    :return: dictionary with identifiers of selected shops and sets of products to buy in each shop
+    """
+
     result = {}
 
     while len(products_list) > 0:
@@ -53,6 +68,15 @@ def order_shops(
         shops: dict[int, dict],
         start: dict
 ) -> list[tuple[int, list]]:
+    """
+    Heuristics for ordering list of selected shops.
+
+    :param shops_list: list of selected shops
+    :param shops: dictionary with all available shops
+    :param start: position of the start point
+    :return: ordered list of selected shops
+    """
+
     def det(a: dict, b: dict, c: dict) -> float:
         return a['x'] * b['y'] + a['y'] * c['x'] + b['x'] * c['y'] - c['x'] * b['y'] - c['y'] * a['x']
 
@@ -77,6 +101,17 @@ def calculate_cost(
         start: dict,
         weights: dict[str, dict]
 ) -> float:
+    """
+    Calculate the cost of a given solution based on our cost function:
+    sum_{i=0}^{k-1} w_{i, i + 1} * d_{i, i+1} + sum_{i=1}^{k} q_k
+
+    :param shops_list: ordered list of selected shops
+    :param shops: dictionary with all available shops
+    :param start: position of the start point
+    :param weights: weights of roads between all shops
+    :return: cost of a given solution
+    """
+
     def dist(shop_i: dict, shop_j: dict) -> float:
         return math.sqrt((shop_i['x'] - shop_j['x']) ** 2 + (shop_i['y'] - shop_j['y']) ** 2)
 
@@ -96,6 +131,11 @@ def calculate_cost(
 
 
 if __name__ == '__main__':
+    """
+    Program takes one argument - relative path to the file with JSON data.
+    Program prints example solution that satisfies problem constraints in JSON format. 
+    """
+
     if len(sys.argv) > 1:
         filename = sys.argv[1]
     else:
