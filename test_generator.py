@@ -1,5 +1,4 @@
 import json
-import numpy as np
 from matplotlib import pyplot as plt
 import data
 
@@ -9,7 +8,7 @@ def save_as_json(test, test_name):
         json.dump(test, file)
 
 
-def plot_shops(wrapper):
+def plot_shops(wrapper, result=None):
     xss = [wrapper.x_start]
     yss = [wrapper.y_start]
     plt.scatter(xss, yss, c="red")
@@ -18,15 +17,22 @@ def plot_shops(wrapper):
     plt.scatter(xs, ys, c="blue")
     for i in range(1, len(xs) + 1):
         plt.annotate(i, (xs[i - 1], ys[i - 1]))
+    if result is not None:
+        chosen_shops_x = []
+        chosen_shops_y = []
+        for elem in result["solution"]:
+            chosen_shops_x.append(xs[elem[0] - 1])
+            chosen_shops_y.append(ys[elem[0] - 1])
+        plt.plot(chosen_shops_x, chosen_shops_y)
     plt.show()
 
 
 def generate_test(wrapper):
-    '''
-    Shops are distributed uniformly, weights are distributed with Gaussian distribution and queue coefficient are also distributed with Gaussian distribution
-    :return:
-    dict
-    '''
+    """
+    Function for wrapped data generates a python dict which then is passed to the save_as_json function
+    :param wrapper: object containing all data needed to compute a test case
+    :return: python dictionary representing the test case
+    """
     res = {}
     shopping_list = [i for i in range(1, wrapper.shopping_list_size + 1)]
     start = {"x": wrapper.x_start, "y": wrapper.y_start}
@@ -53,6 +59,5 @@ def generate_test(wrapper):
 
 
 if __name__ == "__main__":
-    plot_shops(data.two_cities_with_valley)
-    res = generate_test(data.three_cities)
+    res = generate_test(data.circle)
     save_as_json(res, "tests/circle.json")
