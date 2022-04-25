@@ -1,48 +1,46 @@
 import json
 import math
-import os
 import random
-import sys
 from collections import defaultdict
 from functools import cmp_to_key
 from typing import Callable, Set, Dict, List, Tuple
 
+import data
+from test_generator import plot_shops
 
-def solve(filename: str, test_name: str, n: int) -> None:
+
+def solve(test_data: Dict, n: int = 1) -> List[Dict]:
     """
-    Read JSON data from file and find sample solutions that satisfy problem constraints in JSON string.
-    Save n calculated solutions in "solutions/test_name" folder.
+    Find sample solutions that satisfy problem constraints.
 
-    :param filename: name of the file to read JSON from
-    :param test_name: name of the test
+    :param test_data: dictionary with test data (start position, list, shops, weights)
     :param n: number of solutions to generate
+    :return: list of dictionaries with calculated solution and its cost
     """
-
-    with open(filename, 'r') as file:
-        data = json.load(file)
 
     shops = {}
     item_shops = defaultdict(list)
-    products_list = set(data['list'])
-    start = data['start']
-    weights = data['weights']
+    products_list = set(test_data['list'])
+    start = test_data['start']
+    weights = test_data['weights']
 
-    for shop in data['shops']:
+    for shop in test_data['shops']:
         shop['items'] = set(shop['items'])
         shops[shop['id']] = shop
 
         for item in shop['items']:
             item_shops[item].append(shop)
 
-    os.makedirs(f'solutions/{test_name}', exist_ok=True)
+    solutions = []
 
-    for i in range(1, n + 1):
+    for _ in range(n):
         shops_list = select_shops(products_list, item_shops)
         shops_list = order_shops(shops_list, shops, start)
         cost = calculate_cost(shops_list, shops, start, weights)
 
-        with open(f'solutions/{test_name}/{i}.json', 'w+') as file:
-            json.dump({'solution': shops_list, 'cost': cost}, file)
+        solutions.append({'solution': shops_list, 'cost': cost})
+
+    return solutions
 
 
 def select_shops(
@@ -85,19 +83,19 @@ def order_shops(
     """
 
     def det(a: Dict, b: Dict, c: Dict) -> float:
-        return a['x'] * b['y'] + a['y'] * c['x'] + b['x'] * c['y'] - c['x'] * b['y'] - c['y'] * a['x']
+        return a['x'] * b['y'] + a['y'] * c['x'] + b['x'] * c['y'] - c['x'] * b['y'] - c['y'] * a['x'] - b['x'] * a['y']
 
     def det_start(shop_i: Tuple[int, List], shop_j: Tuple[int, List]) -> float:
         return det(start, shops[shop_i[0]], shops[shop_j[0]])
 
-    def filter_shops(filter_func: Callable, reverse_sort: bool) -> List[Tuple[int, List]]:
+    def filter_shops(filter_func: Callable) -> List[Tuple[int, List]]:
         result = filter(filter_func, shops_list.items())
         result = map(lambda shop: (shop[0], list(shop[1])), result)
-        result = sorted(result, key=cmp_to_key(det_start), reverse=reverse_sort)
+        result = sorted(result, key=cmp_to_key(det_start))
         return result
 
-    upper_shops = filter_shops(lambda shop: shops[shop[0]]['y'] >= start['y'], True)
-    lower_shops = filter_shops(lambda shop: shops[shop[0]]['y'] < start['y'], False)
+    upper_shops = filter_shops(lambda shop: shops[shop[0]]['y'] >= start['y'])
+    lower_shops = filter_shops(lambda shop: shops[shop[0]]['y'] < start['y'])
 
     return upper_shops + lower_shops
 
@@ -139,23 +137,11 @@ def calculate_cost(
 
 if __name__ == '__main__':
     """
-    Program finds and saves example solutions that satisfies problem constraints in JSON format. 
-    
-    Program takes two arguments:
-    :param filename: relative path to the file with JSON data
-    :param n: number of solutions to generate
+    Find and print example solution that satisfies problem constraints.
     """
 
-    if len(sys.argv) > 2:
-        n = int(sys.argv[2])
-    else:
-        n = 10
+    with open('tests/normal2d.json', 'r') as file:
+        solution = solve(json.load(file))[0]
 
-    if len(sys.argv) > 1:
-        filename = sys.argv[1]
-        test_name = filename.split('/')[-1].split('.')[0]
-    else:
-        filename = 'tests/basic.json'
-        test_name = 'basic'
-
-    solve(filename, test_name, n)
+    plot_shops(data.normal2d, solution)
+    print(solution)
