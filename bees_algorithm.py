@@ -28,7 +28,9 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
         shops[shop['id']] = shop
 
     def solve():
-        # initial population is top solutions from basic solve
+        """
+        main function which create initial population and do bees algorithm
+        """
         initial_population = basic_solve.solve(test_data, ns)
         initial_population.sort(key=lambda x: x.get('cost'))
         patches = initial_population[:nb]
@@ -48,8 +50,9 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
 
             # other bees are doing global search
             global_searches = basic_solve.solve(test_data, ns - nb)
+            # after getting new solutions we sort them and check best
             new_solutions.extend(global_searches)
-            new_solutions = new_solutions.sort(key=lambda x: x.get['cost'])
+            new_solutions.sort(key=lambda x: x.get('cost'))
             new_best_cost = new_solutions[0]
 
             # we check stop conditions
@@ -61,7 +64,7 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
             patches = new_solutions[:nb]
 
     def local_search(scout, foragers):
-        # original path contains all shops
+        # local search in the neighbourhood of scout - every forager create his own solution
         original_path = []
         solutions = []
         for elem in scout['solution']:
@@ -72,6 +75,7 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
         return solution
 
     def generate_new_solution(original_path):
+        #generating new solution
         # 0 - add shop, 1 - remove shop, 2 - permutation
         while True:
             new_path = original_path
@@ -96,14 +100,17 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
                         distance -= 2
             solution = check_solution(new_path, shops, products_list)
             if solution is not None:
-                print(solution)
-                cost = basic_solve.calculate_cost(solution, shops, start, weights)
-                return {'solution': solution, 'cost': cost}
+                listed_solution = []
+                for elem in solution.items():
+                    listed_solution.append((elem[0], list(elem[1])))
+                cost = basic_solve.calculate_cost(listed_solution, shops, start, weights)
+                return {'solution': listed_solution, 'cost': cost}
 
     solve()
 
 
 def check_solution(path, shops, products_list):
+    #checking the solution as in as in basic_solve.select_shops()
     result = {}
     for shop_number in path:
         current_shop = shops[shop_number]
