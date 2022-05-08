@@ -5,8 +5,7 @@ import basic_solve
 
 
 def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dict, neighbourhood_size,
-                   epsilon: float = 12,
-                   max_iters=10):
+                   iters_without_improvement: float = 20, max_iters=100):
     """
     :param ns: number of scouts
     :param ne: number of elite solutions
@@ -35,6 +34,9 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
         initial_population.sort(key=lambda x: x.get('cost'))
         patches = initial_population[:nb]
         best_cost = patches[0]['cost']
+        best_solution = patches[0]
+
+        no_improvement = 0
         iterations = 0
 
         # main loop
@@ -56,12 +58,23 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
             new_best_cost = new_solutions[0]
 
             # we check stop conditions
-            if abs(new_best_cost - best_cost) < epsilon:
+            if new_best_cost['cost'] >= best_cost:
+                no_improvement += 1
+            else:
+                no_improvement = 0
+                best_cost = new_best_cost['cost']
+                best_solution = new_best_cost.copy()
+
+            if no_improvement >= iters_without_improvement:
                 break
             if iterations >= max_iters:
                 break
+
             # new patches are our new solutions
             patches = new_solutions[:nb]
+            iterations += 1
+
+        return best_solution
 
     def local_search(scout, foragers):
         # local search in the neighbourhood of scout - every forager create his own solution
@@ -78,14 +91,15 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
         #generating new solution
         # 0 - add shop, 1 - remove shop, 2 - permutation
         while True:
-            new_path = original_path
+            new_path = original_path.copy()
             distance = neighbourhood_size
             while distance > 0:
                 operation = random.randint(0, 2)
                 if operation == 0:
                     position = random.randint(1, len(shops))
                     if position not in new_path:
-                        new_path.append(position)
+                        index = random.randint(0, len(new_path))
+                        new_path.insert(index, position)
                         distance -= 1
                 elif operation == 1:
                     elem_to_remove = random.sample(new_path, 1)
@@ -106,7 +120,7 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
                 cost = basic_solve.calculate_cost(listed_solution, shops, start, weights)
                 return {'solution': listed_solution, 'cost': cost}
 
-    solve()
+    return solve()
 
 
 def check_solution(path, shops, products_list):
@@ -123,4 +137,4 @@ def check_solution(path, shops, products_list):
 
 
 with open('tests/normal2d.json', 'r') as file:
-    bees_algorithm(7, 2, 5, 3, 2, json.load(file), 3)
+    print(bees_algorithm(7, 2, 5, 3, 2, json.load(file), 3))
