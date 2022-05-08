@@ -13,7 +13,7 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
     :param nre: number of foragers for each elite solution
     :param nrb: number of foragers for each best, but not elite solution
     :param test_data: dictionary with test data (start position, list, shops, weights)
-    :param epsilon: epsilon to check if solution is near to previous one - stop condition
+    :param iters_without_improvement: max number of iterations without improvement - stop condition
     :param max_iters: maximal number of iterations
     :param neighbourhood_size: Euclidean distance in which we do local search
     """
@@ -35,19 +35,17 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
         patches = initial_population[:nb]
         best_cost = patches[0]['cost']
         best_solution = patches[0]
-
         no_improvement = 0
-        iterations = 0
 
         # main loop
-        while True:
+        for i in range(max_iters):
             new_solutions = []
             # search in elite and best solutions
             for i in range(ne):
-                new_solution = local_search(patches[i], nre)
+                new_solution = local_search(patches[i], nre, -i / max_iters + 1)
                 new_solutions.append(new_solution)
             for i in range(ne, nb):
-                new_solution = local_search(patches[i], nrb)
+                new_solution = local_search(patches[i], nrb, -i / max_iters + 1)
                 new_solutions.append(new_solution)
 
             # other bees are doing global search
@@ -67,16 +65,13 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
 
             if no_improvement >= iters_without_improvement:
                 break
-            if iterations >= max_iters:
-                break
 
             # new patches are our new solutions
             patches = new_solutions[:nb]
-            iterations += 1
 
         return best_solution
 
-    def local_search(scout, foragers):
+    def local_search(scout, foragers, temperature):
         # local search in the neighbourhood of scout - every forager create his own solution
         original_path = []
         solutions = []
@@ -85,7 +80,11 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
         for i in range(foragers):
             solutions.append(generate_new_solution(original_path))
         solution = min(solutions, key=lambda x: x.get('cost'))
-        return solution
+
+        if solution['cost'] < scout['cost'] or random.random() < temperature:
+            return solution
+        else:
+            return scout
 
     def generate_new_solution(original_path):
         #generating new solution
@@ -136,5 +135,6 @@ def check_solution(path, shops, products_list):
     return None
 
 
-with open('tests/normal2d.json', 'r') as file:
-    print(bees_algorithm(7, 2, 5, 3, 2, json.load(file), 3))
+if __name__ == '__main__':
+    with open('tests/normal2d.json', 'r') as file:
+        print(bees_algorithm(7, 2, 5, 3, 2, json.load(file), 3))
