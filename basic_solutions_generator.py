@@ -5,11 +5,11 @@ from collections import defaultdict
 from functools import cmp_to_key
 from typing import Callable, Set, Dict, List, Tuple
 
-import data
-from test_generator import plot_shops
+from tests import simple_tests_data
+from tests.tests_generator import plot_shops
 
 
-def solve(test_data: Dict, n: int = 1) -> List[Dict]:
+def generate(test_data: Dict, n: int = 1) -> List[Dict]:
     """
     Find sample solutions that satisfy problem constraints.
 
@@ -140,8 +140,8 @@ if __name__ == '__main__':
     Find and print example solution that satisfies problem constraints.
     """
 
-    with open('tests/normal2d.json', 'r') as file:
-        solution = solve(json.load(file))[0]
+    with open('tests/data/normal2d.json', 'r') as file:
+        solution = generate(json.load(file))[0]
 
-    plot_shops(data.normal2d, solution)
+    plot_shops(simple_tests_data.normal2d, solution)
     print(solution)

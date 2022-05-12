@@ -1,12 +1,11 @@
 import json
 from matplotlib import pyplot as plt
-import data
 import numpy as np
 import pickle
 
 
 def save_as_json(test, test_name):
-    with open(test_name, "w") as file:
+    with open(test_name, "w+") as file:
         json.dump(test, file)
 
 
@@ -20,11 +19,16 @@ def plot_shops(wrapper, result=None):
     for i in range(1, len(xs) + 1):
         plt.annotate(i, (xs[i - 1], ys[i - 1]))
     if result is not None:
-        chosen_shops_x = []
-        chosen_shops_y = []
+        chosen_shops_x = [wrapper.x_start]
+        chosen_shops_y = [wrapper.y_start]
+
         for elem in result["solution"]:
             chosen_shops_x.append(xs[elem[0] - 1])
             chosen_shops_y.append(ys[elem[0] - 1])
+
+        chosen_shops_x.append(wrapper.x_start)
+        chosen_shops_y.append(wrapper.y_start)
+
         plt.plot(chosen_shops_x, chosen_shops_y)
     plt.show()
 

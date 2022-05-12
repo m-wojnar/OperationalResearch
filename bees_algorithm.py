@@ -2,7 +2,7 @@ import math
 import random
 from typing import Dict
 import json
-import basic_solve
+import basic_solutions_generator
 
 
 def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dict, neighbourhood_size: float,
@@ -36,7 +36,7 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
         """
         nonlocal temperature
 
-        initial_population = basic_solve.solve(test_data, ns)
+        initial_population = basic_solutions_generator.generate(test_data, ns)
         initial_population.sort(key=lambda x: x.get('cost'))
         patches = initial_population[:nb]
 
@@ -59,7 +59,7 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
                 new_solutions.append(new_solution)
 
             # other bees are doing global search
-            global_searches = basic_solve.solve(test_data, ns - nb)
+            global_searches = basic_solutions_generator.generate(test_data, ns - nb)
             # after getting new solutions we sort them and check best
             new_solutions.extend(global_searches)
             new_solutions.sort(key=lambda x: x.get('cost'))
@@ -136,7 +136,7 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
                 listed_solution = []
                 for elem in solution.items():
                     listed_solution.append((elem[0], list(elem[1])))
-                cost = basic_solve.calculate_cost(listed_solution, shops, start, weights)
+                cost = basic_solutions_generator.calculate_cost(listed_solution, shops, start, weights)
                 return {'solution': listed_solution, 'cost': cost}
 
     return solve()
@@ -156,5 +156,5 @@ def check_solution(path, shops, products_list):
 
 
 if __name__ == '__main__':
-    with open('tests/normal2d.json', 'r') as file:
+    with open('tests/data/normal2d.json', 'r') as file:
         print(bees_algorithm(7, 2, 5, 3, 2, json.load(file), 3))

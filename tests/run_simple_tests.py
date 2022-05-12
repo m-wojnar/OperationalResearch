@@ -3,9 +3,9 @@
 import os
 import random
 
-import data
-from basic_solve import solve
-from test_generator import generate_test, save_as_json
+import simple_tests_data
+from basic_solutions_generator import generate
+from tests_generator import generate_test, save_as_json
 
 
 def main() -> None:
@@ -17,19 +17,19 @@ def main() -> None:
     random.seed(42)
 
     all_tests = [
-        ('circle', data.circle),
-        ('normal2d', data.normal2d),
-        ('random_uniform', data.random_uniform),
-        ('square', data.square),
-        ('three_cities', data.three_cities),
-        ('two_cities_with_valley', data.two_cities_with_valley)
+        ('circle', simple_tests_data.circle),
+        ('normal2d', simple_tests_data.normal2d),
+        ('random_uniform', simple_tests_data.random_uniform),
+        ('square', simple_tests_data.square),
+        ('three_cities', simple_tests_data.three_cities),
+        ('two_cities_with_valley', simple_tests_data.two_cities_with_valley)
     ]
 
     for name, test in all_tests:
         test = generate_test(test)
-        save_as_json(test, f'tests/{name}.json')
+        save_as_json(test, f'data/{name}.json')
 
-        solutions = solve(test, 10)
+        solutions = generate(test, 10)
         os.makedirs(f'solutions/{name}', exist_ok=True)
 
         for i, solution in enumerate(solutions, 1):
