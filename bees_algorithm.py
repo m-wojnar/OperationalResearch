@@ -6,7 +6,7 @@ import basic_solve
 
 
 def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dict, neighbourhood_size: float,
-                   iters_without_improvement: float = 300, max_iters: int = 1000,
+                   iters_without_improvement: float = 150, max_iters: int = 500,
                    temperature: float = 1000, temp_decay: float = 0.99):
     """
     :param ns: number of scouts
@@ -45,16 +45,17 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
         best_iteration = 0
 
         no_improvement = 0
+        iterations_num = 0
 
         # main loop
         for i in range(max_iters):
             new_solutions = []
             # search in elite and best solutions
-            for i in range(ne):
-                new_solution = local_search(patches[i], nre, temperature)
+            for j in range(ne):
+                new_solution = local_search(patches[j], nre, temperature)
                 new_solutions.append(new_solution)
-            for i in range(ne, nb):
-                new_solution = local_search(patches[i], nrb, temperature)
+            for j in range(ne, nb):
+                new_solution = local_search(patches[j], nrb, temperature)
                 new_solutions.append(new_solution)
 
             # other bees are doing global search
@@ -79,8 +80,9 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
             # new patches are our new solutions
             patches = new_solutions[:nb]
             temperature *= temp_decay
+            iterations_num += 1
 
-        return best_solution, best_iteration
+        return best_solution, best_iteration, iterations_num
 
     def local_search(scout, foragers, temperature):
         # local search in the neighbourhood of scout - every forager create his own solution
