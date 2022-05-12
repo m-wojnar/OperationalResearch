@@ -102,12 +102,12 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
 
     def generate_new_solution(original_path):
         #generating new solution
-        # 0 - add shop, 1 - remove shop, 2 - permutation
+        # 0 - add shop, 1 - remove shop, 2 - substitute shop, 3 - permutation
         while True:
             new_path = original_path.copy()
             distance = neighbourhood_size
             while distance > 0:
-                operation = random.randint(0, 2)
+                operation = random.randint(0, 3)
                 if operation == 0:
                     position = random.randint(1, len(shops))
                     if position not in new_path:
@@ -118,6 +118,12 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
                     elem_to_remove = random.sample(new_path, 1)
                     if elem_to_remove in new_path:
                         new_path.remove(elem_to_remove)
+                        distance -= 1
+                elif operation == 2:
+                    position = random.randint(1, len(shops))
+                    if position not in new_path:
+                        index = random.randrange(0, len(new_path))
+                        new_path[index] = position
                         distance -= 1
                 else:
                     if distance >= 2:
