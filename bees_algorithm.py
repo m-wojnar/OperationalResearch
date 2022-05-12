@@ -11,11 +11,11 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
     """
     :param ns: number of scouts
     :param ne: number of elite solutions
-    :param nb: number of best solutions
+    :param nb: number of the best solutions
     :param nre: number of foragers for each elite solution
     :param nrb: number of foragers for each best, but not elite solution
     :param test_data: dictionary with test data (start position, list, shops, weights)
-    :param neighbourhood_size: Euclidean distance in which we do local search
+    :param neighbourhood_size: Levenshtein distance in which we do local search
     :param iters_without_improvement: max number of iterations without improvement - stop condition
     :param max_iters: maximal number of iterations
     :param temperature: initial annealing temperature (temperature = 0 means no annealing)
