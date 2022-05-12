@@ -1,11 +1,13 @@
+import math
 import random
 from typing import Dict
 import json
 import basic_solve
 
 
-def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dict, neighbourhood_size,
-                   iters_without_improvement: float = 20, max_iters=100):
+def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dict, neighbourhood_size: float,
+                   iters_without_improvement: float = 300, max_iters: int = 1000,
+                   temperature: float = 1000, temp_decay: float = 0.99):
     """
     :param ns: number of scouts
     :param ne: number of elite solutions
@@ -13,9 +15,11 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
     :param nre: number of foragers for each elite solution
     :param nrb: number of foragers for each best, but not elite solution
     :param test_data: dictionary with test data (start position, list, shops, weights)
+    :param neighbourhood_size: Euclidean distance in which we do local search
     :param iters_without_improvement: max number of iterations without improvement - stop condition
     :param max_iters: maximal number of iterations
-    :param neighbourhood_size: Euclidean distance in which we do local search
+    :param temperature: initial annealing temperature (temperature = 0 means no annealing)
+    :param temp_decay: annealing temperature multiplier (how fast temperature should decay)
     """
 
     shops = {}
@@ -30,11 +34,16 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
         """
         main function which create initial population and do bees algorithm
         """
+        nonlocal temperature
+
         initial_population = basic_solve.solve(test_data, ns)
         initial_population.sort(key=lambda x: x.get('cost'))
         patches = initial_population[:nb]
+
         best_cost = patches[0]['cost']
         best_solution = patches[0]
+        best_iteration = 0
+
         no_improvement = 0
 
         # main loop
@@ -42,10 +51,10 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
             new_solutions = []
             # search in elite and best solutions
             for i in range(ne):
-                new_solution = local_search(patches[i], nre, -i / max_iters + 1)
+                new_solution = local_search(patches[i], nre, temperature)
                 new_solutions.append(new_solution)
             for i in range(ne, nb):
-                new_solution = local_search(patches[i], nrb, -i / max_iters + 1)
+                new_solution = local_search(patches[i], nrb, temperature)
                 new_solutions.append(new_solution)
 
             # other bees are doing global search
@@ -62,14 +71,16 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
                 no_improvement = 0
                 best_cost = new_best_cost['cost']
                 best_solution = new_best_cost.copy()
+                best_iteration = i
 
             if no_improvement >= iters_without_improvement:
                 break
 
             # new patches are our new solutions
             patches = new_solutions[:nb]
+            temperature *= temp_decay
 
-        return best_solution
+        return best_solution, best_iteration
 
     def local_search(scout, foragers, temperature):
         # local search in the neighbourhood of scout - every forager create his own solution
@@ -81,7 +92,8 @@ def bees_algorithm(ns: int, ne: int, nb: int, nre: int, nrb: int, test_data: Dic
             solutions.append(generate_new_solution(original_path))
         solution = min(solutions, key=lambda x: x.get('cost'))
 
-        if solution['cost'] < scout['cost'] or random.random() < temperature:
+        cost_difference = scout['cost'] - solution['cost']
+        if cost_difference > 0 or (temperature > 0 and random.random() < math.exp(cost_difference / temperature)):
             return solution
         else:
             return scout
