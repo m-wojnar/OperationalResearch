@@ -5,7 +5,7 @@ import random
 import numpy.random
 
 from bees_algorithm import bees_algorithm
-from tests.tests_generator import generate_large_test
+from tests.tests_generator import *
 
 
 def run_one_test(ns, ne, nb, nre, nrb, neighbourhood_size, iters_without_improvement, max_iters,
@@ -28,9 +28,9 @@ if __name__ == '__main__':
     numpy.random.seed(seed)
     random.seed(seed)
 
-    test_data = generate_large_test(200, 500)
+    test_data = generate_city_test(200, 500)
 
-    output_file = 'parameters_test.csv'
+    output_file = 'results/parameters_city_test.csv'
     with open(output_file, 'w+') as file:
         file.write('run,seed,ns,ne,nb,nre,nrb,d,improve_iters,max_iters,temperature,decay,cost,best_iter,iter_num\n')
 

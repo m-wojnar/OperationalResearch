@@ -94,6 +94,84 @@ def generate_large_test(shopping_list_size=100, number_of_shops=500):
     return res
 
 
+def generate_city_test(shopping_list_size=100, number_of_shops=500, radius=100, max_q=100, weights_scale=0.5):
+    res = {}
+    shopping_list = [i for i in range(1, shopping_list_size + 1)]
+    start = {"x": np.random.normal(0, radius), "y": np.random.normal(0, radius)}
+    shops = []
+    res["list"] = shopping_list
+    res["start"] = start
+    check = []
+
+    for idx in range(1, number_of_shops + 1):
+        items = np.random.randint(1, len(shopping_list) + 1, np.random.randint(1, 3 + 1))
+        check.extend(items)
+
+        x, y = np.random.normal(0, radius), np.random.normal(0, radius)
+        q = max(0, -max_q * np.sqrt(x ** 2 + y ** 2) / (3 * radius) + max_q)
+
+        shop_dict = {"id": idx, "q": q, "x": x, "y": y, "items": items}
+        shops.append(shop_dict)
+
+    if not set(check).issuperset(set(shopping_list)):
+        return generate_city_test(shopping_list_size, number_of_shops, radius, max_q)
+
+    res["shops"] = shops
+    weights_dict = {f"{idx}": {} for idx in range(0, len(shops) + 1)}
+
+    for i in range(0, len(shops) + 1):
+        for j in range(i + 1, len(shops) + 1):
+            weight = np.random.normal(1, weights_scale)
+            weights_dict[f"{i}"][f"{j}"] = weight
+            weights_dict[f"{j}"][f"{i}"] = weight
+
+    res["weights"] = weights_dict
+    return res
+
+
+def generate_agglomeration_test(shopping_list_size=100, number_of_shops=500, radius=20):
+    res = {}
+    shopping_list = [i for i in range(1, shopping_list_size + 1)]
+    start = {"x": 0, "y": 0}
+    shops = []
+    res["list"] = shopping_list
+    res["start"] = start
+    check = []
+
+    base_x = [-100, -100, 100, 100]
+    base_y = [-100, 100, -100, 100]
+    next_i = number_of_shops // 4
+    i = 0
+
+    for idx in range(1, number_of_shops + 1):
+        if idx % next_i == 0:
+            i += 1
+
+        items = np.random.randint(1, len(shopping_list) + 1, np.random.randint(1, 3 + 1))
+        check.extend(items)
+
+        current_i = min(i, 3)
+        x, y = np.random.normal(base_x[current_i], radius), np.random.normal(base_y[current_i], radius)
+
+        shop_dict = {"id": idx, "q": 0, "x": x, "y": y, "items": items}
+        shops.append(shop_dict)
+
+    if not set(check).issuperset(set(shopping_list)):
+        return generate_agglomeration_test(shopping_list_size, number_of_shops, radius)
+
+    res["shops"] = shops
+    weights_dict = {f"{idx}": {} for idx in range(0, len(shops) + 1)}
+
+    for i in range(0, len(shops) + 1):
+        for j in range(i + 1, len(shops) + 1):
+            weight = np.random.normal(1, 0.05)
+            weights_dict[f"{i}"][f"{j}"] = weight
+            weights_dict[f"{j}"][f"{i}"] = weight
+
+    res["weights"] = weights_dict
+    return res
+
+
 def save_large_test_cases(n=10):
     for i in range(1, n + 1):
         res = generate_large_test()
